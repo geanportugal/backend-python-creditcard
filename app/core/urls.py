@@ -14,9 +14,22 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+
+from card.api.viewsets import CreditCardViewSet
 from django.contrib import admin
-from django.urls import path
+from django.urls import include, path
+from rest_framework import routers
+from rest_framework.documentation import include_docs_urls
+from rest_framework.schemas import get_schema_view
+
+router = routers.DefaultRouter()
+router.register(r'credit-card/', CreditCardViewSet)
+
+schema_view = get_schema_view(title='Credit Card API')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/v1/', include(router.urls)),
+    path('api/v1/docs/', include_docs_urls(title='Credit Card API')),
+    path('api/v1/schema/', schema_view),
 ]
