@@ -3,6 +3,8 @@ from datetime import date
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
+from django.contrib.auth.models import User
+from rest_framework_simplejwt.tokens import RefreshToken
 from card.models import CreditCard
 from card.api.serializers import CreditCardSerializer
 
@@ -29,6 +31,10 @@ def create_credit_card(credit_card_data):
 
 @pytest.mark.django_db
 def test_create_credit_card(api_client, credit_card_data):
+    user = User.objects.create_user('test_user', 'test@example.com', 'password')
+    refresh_token = RefreshToken.for_user(user)
+    token = refresh_token.access_token
+    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(token))
     url = reverse('creditcard-list')
     response = api_client.post(url, credit_card_data, format='json')
     assert response.status_code == status.HTTP_201_CREATED
@@ -37,6 +43,10 @@ def test_create_credit_card(api_client, credit_card_data):
 
 @pytest.mark.django_db
 def test_create_credit_card_invalid_data(api_client):
+    user = User.objects.create_user('test_user', 'test@example.com', 'password')
+    refresh_token = RefreshToken.for_user(user)
+    token = refresh_token.access_token
+    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(token))
     url = reverse('creditcard-list')
     credit_card_data = {
         'number': '1234567890123456',  # Invalid credit card number
@@ -66,6 +76,10 @@ def test_credit_card_decryption(create_credit_card):
 
 @pytest.mark.django_db
 def test_get_credit_card(api_client, create_credit_card):
+    user = User.objects.create_user('test_user', 'test@example.com', 'password')
+    refresh_token = RefreshToken.for_user(user)
+    token = refresh_token.access_token
+    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(token))
     url = reverse('creditcard-list')
     response = api_client.get(url)
     assert response.status_code == status.HTTP_200_OK
@@ -75,6 +89,10 @@ def test_get_credit_card(api_client, create_credit_card):
 
 @pytest.mark.django_db
 def test_get_credit_card_detail(api_client, create_credit_card):
+    user = User.objects.create_user('test_user', 'test@example.com', 'password')
+    refresh_token = RefreshToken.for_user(user)
+    token = refresh_token.access_token
+    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(token))
     url = reverse('creditcard-detail', args=[create_credit_card.id])
     response = api_client.get(url)
     assert response.status_code == status.HTTP_200_OK
@@ -83,6 +101,10 @@ def test_get_credit_card_detail(api_client, create_credit_card):
 
 @pytest.mark.django_db
 def test_update_credit_card(api_client, create_credit_card):
+    user = User.objects.create_user('test_user', 'test@example.com', 'password')
+    refresh_token = RefreshToken.for_user(user)
+    token = refresh_token.access_token
+    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(token))
     url = reverse('creditcard-detail', args=[create_credit_card.id])
     updated_data = {
         'number': '4111111111111122',
@@ -99,6 +121,10 @@ def test_update_credit_card(api_client, create_credit_card):
 
 @pytest.mark.django_db
 def test_delete_credit_card(api_client, create_credit_card):
+    user = User.objects.create_user('test_user', 'test@example.com', 'password')
+    refresh_token = RefreshToken.for_user(user)
+    token = refresh_token.access_token
+    api_client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(token))
     url = reverse('creditcard-detail', args=[create_credit_card.id])
     response = api_client.delete(url)
     assert response.status_code == status.HTTP_204_NO_CONTENT
