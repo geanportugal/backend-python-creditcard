@@ -5,8 +5,8 @@ from django.core.validators import MinLengthValidator
 
 class CreditCard(models.Model):
     number = models.CharField('number', max_length=255, unique=True, db_index=True)
-    exp_date = models.DateField('exp_date', format='%Y-%m-%d')
-    holder = models.CharField('holder', max_length=30, validators=[MinLengthValidator(3)])
+    exp_date = models.DateField('exp_date')
+    holder = models.CharField('holder', max_length=30)
     cvv = models.CharField('cvv', max_length=4, blank=True, null=True)
     brand = models.CharField('brand', max_length=10)
 
