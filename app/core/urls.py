@@ -19,17 +19,34 @@ from card.api.viewsets import CreditCardViewSet
 from django.contrib import admin
 from django.urls import include, path
 from rest_framework import routers
-from rest_framework.documentation import include_docs_urls
-from rest_framework.schemas import get_schema_view
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+
+from drf_yasg.views import get_schema_view
+from drf_yasg import openapi
+
+schema_view = get_schema_view(
+    openapi.Info(
+        title="MaisTodos Credit Card API",
+        default_version='v1',
+        description="Your API Description",
+        terms_of_service="https://www.example.com/terms/",
+        contact=openapi.Contact(email="contact@example.com"),
+        license=openapi.License(name="Your License"),
+    ),
+    public=True,
+)
+
 
 router = routers.DefaultRouter()
-router.register(r'credit-card/', CreditCardViewSet)
+router.register('credit-card', CreditCardViewSet)
 
-schema_view = get_schema_view(title='Credit Card API')
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/v1/', include(router.urls)),
-    path('api/v1/docs/', include_docs_urls(title='Credit Card API')),
-    path('api/v1/schema/', schema_view),
+    path('api/v1/docs/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+    path('api/v1/redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
+    path('api/v1/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/v1/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 ]
