@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/4.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
-import os
+from decouple import config
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -22,18 +22,18 @@ DATA_DIR = BASE_DIR.parent / 'data' / 'web'
 
 # SECURITY WARNING: keep the secret key used in production secret!
 # Configures the secret key through the key used in the .env file
-SECRET_KEY = os.getenv('SECRET_KEY', 'change-me')
+SECRET_KEY = config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # Configure the debug according to the .env file settings
-DEBUG = bool(int(os.getenv('DEBUG', 0)))
+DEBUG = config('DEBUG', default=False, cast=bool)
 
 '''
     For this example we are configuring the accepted hosts as an environment
     variable for greater security of the project
 '''
 ALLOWED_HOSTS = [
-    h.strip() for h in os.getenv('ALLOWED_HOSTS', '').split(',')
+    h.strip() for h in config('ALLOWED_HOSTS', '').split(',')
     if h.strip()
 ]
 
@@ -86,12 +86,12 @@ WSGI_APPLICATION = 'core.wsgi.application'
 # Configure database infos in .env file 
 DATABASES = {
     'default': {
-        'ENGINE': os.getenv('DB_ENGINE', 'change-me'),
-        'NAME': os.getenv('POSTGRES_DB', 'change-me'),
-        'USER': os.getenv('POSTGRES_USER', 'change-me'),
-        'PASSWORD': os.getenv('POSTGRES_PASSWORD', 'change-me'),
-        'HOST': os.getenv('POSTGRES_HOST', 'change-me'),
-        'PORT': os.getenv('POSTGRES_PORT', 'change-me'),
+        'ENGINE': config('DB_ENGINE'),
+        'NAME': config('POSTGRES_DB'),
+        'USER': config('POSTGRES_USER'),
+        'PASSWORD': config('POSTGRES_PASSWORD'),
+        'HOST': config('POSTGRES_HOST'),
+        'PORT': config('POSTGRES_PORT'),
     }
 }
 
