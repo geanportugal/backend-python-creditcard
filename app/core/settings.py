@@ -9,13 +9,19 @@ https://docs.djangoproject.com/en/4.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
-from decouple import config
+import os
+from datetime import timedelta
+from decouple import Config, RepositoryEnv
+
 from pathlib import Path
+
+ENV_PATH = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = BASE_DIR.parent / 'data' / 'web'
-
+dotenv_path = os.path.join(ENV_PATH, 'dotenv', '.env')
+config = Config(RepositoryEnv(dotenv_path))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
@@ -24,6 +30,9 @@ DATA_DIR = BASE_DIR.parent / 'data' / 'web'
 # Configures the secret key through the key used in the .env file
 SECRET_KEY = config('SECRET_KEY')
 
+SECRET_KEY_CARD = config('SECRET_KEY_CARD')
+
+SALT = config('SALT')
 # SECURITY WARNING: don't run with debug turned on in production!
 # Configure the debug according to the .env file settings
 DEBUG = config('DEBUG', default=False, cast=bool)
@@ -47,6 +56,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
+    'rest_framework_simplejwt',
+    'drf_yasg',
+    'card',
 ]
 
 MIDDLEWARE = [
@@ -78,6 +91,29 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'core.wsgi.application'
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ],
+    'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema'
+}
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
+    'SLIDING_TOKEN_LIFETIME': timedelta(days=30),
+}
+
+SWAGGER_SETTINGS = {
+    'DEFAULT_INFO': 'path.to.swagger_info',
+    # (Optional) Customize the Swagger UI look and feel:
+    'SECURITY_DEFINITIONS': {
+        'Basic': {
+            'type': 'basic'
+        }
+    },
+}
 
 
 # Database
