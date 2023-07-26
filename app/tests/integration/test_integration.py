@@ -68,21 +68,6 @@ def test_create_credit_card_invalid_data(api_client, get_tokens_for_user):
     assert CreditCard.objects.count() == 0
 
 
-# @pytest.mark.django_db
-# def test_credit_card_encryption(create_credit_card):
-#     credit_card = create_credit_card
-#     encrypted_card_number = credit_card.number
-#     assert encrypted_card_number != credit_card.number
-
-
-# @pytest.mark.django_db
-# def test_credit_card_decryption(create_credit_card):
-#     credit_card = create_credit_card
-#     encrypted_card_number = credit_card.number
-#     decrypted_card_number = credit_card.decrypt_credit_card(encrypted_card_number)
-#     assert decrypted_card_number == credit_card.number
-
-
 @pytest.mark.django_db
 def test_get_credit_card(api_client, create_credit_card, get_tokens_for_user):
     api_client.credentials(HTTP_AUTHORIZATION=get_tokens_for_user)

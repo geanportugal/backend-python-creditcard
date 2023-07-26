@@ -1,96 +1,112 @@
-# import pytest
-# from datetime import date
-# from rest_framework.exceptions import ValidationError
-# from card.api.serializers import CreditCardSerializer
-# from card.api.utils import CreditCardEncryptor, ValidatedCreditCard
-# from card.models import CreditCard
-
-# @pytest.fixture
-# def valid_credit_card_data():
-#     return {
-#         'number': '4111111111111111',
-#         'exp_date': '02/2026',
-#         'holder': 'John Doe',
-#         'cvv': '123',
-#     }
-
-# def test_credit_card_serializer(valid_credit_card_data):
-#     serializer = CreditCardSerializer(data=valid_credit_card_data)
-#     assert serializer.is_valid()
-
-# def test_credit_card_serializer_invalid_number():
-#     invalid_credit_card_data = {
-#         'number': '1234567890123456',
-#         'exp_date': '02/2026',
-#         'holder': 'John Doe',
-#         'cvv': '123',
-#     }
-#     serializer = CreditCardSerializer(data=invalid_credit_card_data)
-#     with pytest.raises(ValidationError) as exc_info:
-#         serializer.is_valid(raise_exception=True)
-#     assert 'Invalid credit card' in str(exc_info.value)
-
-# def test_credit_card_serializer_invalid_date_format():
-#     invalid_credit_card_data = {
-#         'number': '4111111111111111',
-#         'exp_date': '2026-02',
-#         'holder': 'John Doe',
-#         'cvv': '123',
-#     }
-#     serializer = CreditCardSerializer(data=invalid_credit_card_data)
-#     with pytest.raises(ValidationError) as exc_info:
-#         serializer.is_valid(raise_exception=True)
-#     assert 'Invalid date format. Use \'MM/YYYY\' format.' in str(exc_info.value)
-
-# def test_credit_card_serializer_invalid_brand():
-#     invalid_credit_card_data = {
-#         'number': '4111111111111111',
-#         'exp_date': '02/2026',
-#         'holder': 'John Doe',
-#         'cvv': '123',
-#         'brand': 'InvalidBrand',
-#     }
-#     serializer = CreditCardSerializer(data=invalid_credit_card_data)
-#     with pytest.raises(ValidationError) as exc_info:
-#         serializer.is_valid(raise_exception=True)
-#     assert 'Invalid brand' in str(exc_info.value)
-
-# def test_credit_card_encryptor(valid_credit_card_data):
-#     encryptor = CreditCardEncryptor('my_secret_key', 'my_salt')
-#     encrypted_card = encryptor.encrypt_credit_card(valid_credit_card_data['number'])
-#     assert isinstance(encrypted_card, bytes)
-
-# def test_credit_card_decryptor(valid_credit_card_data):
-#     encryptor = CreditCardEncryptor('my_secret_key', 'my_salt')
-#     encrypted_card = encryptor.encrypt_credit_card(valid_credit_card_data['number'])
-#     decrypted_card = encryptor.decrypt_credit_card(encrypted_card)
-#     assert decrypted_card == valid_credit_card_data['number']
-
-# def test_validated_credit_card_get_brand(valid_credit_card_data):
-#     credit_card = ValidatedCreditCard(valid_credit_card_data['number'])
-#     assert credit_card.get_brand() == 'visa'
-
-# def test_encrypt_credit_card(settings):
-#     settings.SECRET_KEY_CARD = 'secret_key'
-#     settings.SALT = 'salt'
-
-#     credit_card_number = '0000000000000001'
-
-#     encryptor = CreditCardEncryptor(settings.SECRET_KEY_CARD, settings.SALT)
-#     encrypted_card = encryptor.encrypt_credit_card(credit_card_number)
-
-#     assert encrypted_card.startswith('0000000000000001')
-#     assert len(encrypted_card) == 32
+import pytest
+from datetime import date, datetime
+from rest_framework.exceptions import ValidationError
+from rest_framework.test import APIClient
+from card.api.serializers import CreditCardSerializer
+from card.api.utils import CreditCardEncryptor, ValidatedCreditCard
+from card.models import CreditCard
 
 
-# def test_decrypt_credit_card(settings):
-#     settings.SECRET_KEY_CARD = 'secret_key'
-#     settings.SALT = 'salt'
+class FakeRequest(object):
+    status_code = 200
+    method = 'POST'
 
-#     credit_card_number = '0000000000000001'
-#     encrypted_card = '00000000000000011234567890abcdef'
+@pytest.fixture
+def valid_credit_card_data():
+    return {
+        'number': '4111111111111111',
+        'exp_date': '02/2026',
+        'holder': 'John Doe',
+        'cvv': '123',
+    }
 
-#     encryptor = CreditCardEncryptor(settings.SECRET_KEY_CARD, settings.SALT)
-#     decrypted_card = encryptor.decrypt_credit_card(encrypted_card)
+@pytest.fixture
+def invalid_credit_card_data():
+    return {
+        'holder': 'John Doe',
+        'cvv': '123',
+        'number': 'invalid_number',
+        'exp_date': '06/2024',
+    }
 
-#     assert decrypted_card == credit_card_number
+@pytest.fixture
+def fake_request():
+    return FakeRequest()
+
+@pytest.fixture
+def generate_secret_key_card():
+    return 'NOvE58y2SFJ8J0U_QDuZyZ-L9uyidRkp4koTlybCXuc'
+
+@pytest.fixture    
+def generate_salt():
+    return 'NT_tPimVURw3pTVtIvsefQ'
+
+@pytest.mark.django_db
+def test_credit_card_serializer_valid(valid_credit_card_data, fake_request):
+    serializer = CreditCardSerializer(data=valid_credit_card_data, context={'request': fake_request})
+    assert serializer.is_valid()
+
+@pytest.mark.django_db
+def test_credit_card_serializer_invalid(invalid_credit_card_data, fake_request):
+    serializer = CreditCardSerializer(data=invalid_credit_card_data, context={'request': fake_request})
+    assert not serializer.is_valid()
+
+@pytest.mark.django_db
+def test_credit_card_serializer_encryption(valid_credit_card_data, fake_request):
+    serializer = CreditCardSerializer(data=valid_credit_card_data, context={'request': fake_request})
+    serializer.is_valid()
+    encrypted_number = serializer.validated_data['number']
+    assert encrypted_number != valid_credit_card_data['number']  # Check if the number is encrypted
+
+@pytest.mark.django_db
+def test_credit_card_serializer_exp_date_conversion(valid_credit_card_data, fake_request):
+    serializer = CreditCardSerializer(data=valid_credit_card_data, context={'request': fake_request})
+    serializer.is_valid()
+    exp_date = serializer.validated_data['exp_date']
+    assert isinstance(exp_date, date)
+
+@pytest.mark.django_db
+def test_credit_card_serializer_invalid_exp_date_format(invalid_credit_card_data, fake_request):
+    serializer = CreditCardSerializer(data=invalid_credit_card_data, context={'request': fake_request})
+    with pytest.raises(ValidationError):
+        serializer.is_valid(raise_exception=True)
+
+@pytest.mark.django_db
+def test_credit_card_serializer_to_representation(valid_credit_card_data, fake_request):
+    valid_credit_card_data['exp_date'] = date(2026, 2, 28)
+    credit_card = CreditCard(**valid_credit_card_data)
+    serializer = CreditCardSerializer(instance=credit_card, context={'request': fake_request})
+    representation = serializer.data
+    assert representation['exp_date'] == '02/2026'  # Check if the exp_date is correctly formatted
+
+@pytest.mark.django_db
+def test_credit_card_serializer_to_internal_value(valid_credit_card_data, fake_request):
+    fake_request_put = fake_request
+    fake_request_put.method = 'PUT'
+    serializer = CreditCardSerializer(data=valid_credit_card_data, context={'request': fake_request_put})
+    serializer.is_valid()
+    internal_value = serializer.validated_data
+    assert 'exp_date' in internal_value
+    assert 'number' in internal_value
+
+def test_validated_credit_card_get_brand(valid_credit_card_data):
+    credit_card = ValidatedCreditCard(valid_credit_card_data['number'])
+    assert credit_card.get_brand() == 'visa'
+
+def test_encrypt_credit_card(generate_secret_key_card, generate_salt):
+    credit_card_number = '5334477627922012'
+
+    encryptor = CreditCardEncryptor(generate_secret_key_card, generate_salt)
+    encrypted_card = encryptor.encrypt_credit_card(credit_card_number).hex()
+
+    assert encrypted_card == '2f4764f9cca5bf24e97b4b7a2a0700191435bb8c175e386ce47b0174d84e5323'
+
+
+def test_decrypt_credit_card(generate_secret_key_card, generate_salt):
+    credit_card_number = '5334477627922012'
+    encrypted_card = str('2f4764f9cca5bf24e97b4b7a2a0700191435bb8c175e386ce47b0174d84e5323')
+
+    encryptor = CreditCardEncryptor(generate_secret_key_card, generate_salt)
+    decrypted_card = encryptor.decrypt_credit_card(encrypted_card)
+
+    assert decrypted_card == credit_card_number
