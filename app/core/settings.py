@@ -13,14 +13,23 @@ import os
 from datetime import timedelta
 from decouple import Config, RepositoryEnv
 
+"""
+     using python-decouple to manage environment variables
+"""
+
 from pathlib import Path
 
+# path to the dotenv folder where the environment variables are outside the project folder
 ENV_PATH = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = BASE_DIR.parent / 'data' / 'web'
+
+# path to dotenv folder
 dotenv_path = os.path.join(ENV_PATH, 'dotenv', '.env')
+
+# get enviroments variables 
 config = Config(RepositoryEnv(dotenv_path))
 
 # Quick-start development settings - unsuitable for production
@@ -30,9 +39,12 @@ config = Config(RepositoryEnv(dotenv_path))
 # Configures the secret key through the key used in the .env file
 SECRET_KEY = config('SECRET_KEY')
 
+# secret key for encrypt credit card
 SECRET_KEY_CARD = config('SECRET_KEY_CARD')
 
+# salt key for encrypt credit card using in AES encript 
 SALT = config('SALT')
+
 # SECURITY WARNING: don't run with debug turned on in production!
 # Configure the debug according to the .env file settings
 DEBUG = config('DEBUG', default=False, cast=bool)
@@ -61,6 +73,7 @@ INSTALLED_APPS = [
     'drf_yasg',
     'django_extensions',
     'card',
+    'user',
 ]
 
 MIDDLEWARE = [
@@ -93,9 +106,14 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'core.wsgi.application'
 
+# DJANGO REST FRAMEWORK CONFIGURATIONS
+
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.DjangoModelPermissions',
     ],
     'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',
     'TEST_REQUEST_DEFAULT_FORMAT': 'json',
@@ -106,12 +124,15 @@ REST_FRAMEWORK = {
     ]
 }
 
+# CONFIGURATIONS FOR GENERATE JWT TOKEN
+# FOR MOR ACCESS https://django-rest-framework-simplejwt.readthedocs.io/en/latest/
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
     'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
     'SLIDING_TOKEN_LIFETIME': timedelta(days=30),
 }
 
+# drf_yasg FOR DOCUMENTATION USING SWAGGER
 SWAGGER_SETTINGS = {
     'DEFAULT_INFO': 'path.to.swagger_info',
     # (Optional) Customize the Swagger UI look and feel:
