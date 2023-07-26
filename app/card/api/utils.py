@@ -1,33 +1,39 @@
 import re
-import json
 from cryptography.hazmat.primitives import hashes, padding
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-from django.conf import settings
-from django.core.validators import RegexValidator
 from drf_yasg import openapi
-from rest_framework import serializers
 from creditcard.card import CreditCard, BRAND_REGEX
-
 
 
 class ValidatedCreditCard(CreditCard):
     def __init__(self, *args, **kwargs):
+        """Initialize the credit card."""
         return super().__init__(*args, **kwargs)
     
+    # Check the card number against known brand regex patterns and return the brand name
+    # override method from CreditCard from python-creditcard MAISTODOS
     def get_brand(self):
+        """Get the brand of the credit card."""
         for brand, regex in BRAND_REGEX.items():
             if re.match(regex, self.number):
                 return brand
+        # return none because original method return Exception
         return None
 
 class CreditCardEncryptor:
+    """ A class that encrypts and decrypts credit card numbers.
+        AES symmetry algorithm was used for encryption. For more details, see
+        https://cryptography.io/en/latest/hazmat/primitives/symmetric-encryption/
+    """
     def __init__(self, encryption_key, salt):
+        """Initialize the encryptor."""
         self.encryption_key = encryption_key.encode()
         self.key = self.derive_key(salt.encode())
 
     def derive_key(self, salt):
+        """Derive the encryption key from the salt."""
         kdf = PBKDF2HMAC(
             algorithm=hashes.SHA256(),
             length=32,
@@ -36,7 +42,8 @@ class CreditCardEncryptor:
             backend=default_backend()
         )
         return kdf.derive(self.encryption_key)
-
+    
+    # Encrypt the credit card number using AES encryption
     def encrypt_credit_card(self, card_number):
         cipher = Cipher(algorithms.AES(self.key), modes.ECB(), backend=default_backend())
         encryptor = cipher.encryptor()
@@ -44,8 +51,10 @@ class CreditCardEncryptor:
         padded_data = padder.update(card_number.encode()) + padder.finalize()
         encrypted_card = encryptor.update(padded_data) + encryptor.finalize()
         return encrypted_card
-
+    
+    # Decrypt the encrypted credit card number using AES decryption
     def decrypt_credit_card(self, encrypted_card):
+        encrypted_card = bytes.fromhex(encrypted_card)
         cipher = Cipher(algorithms.AES(self.key), modes.ECB(), backend=default_backend())
         decryptor = cipher.decryptor()
         decrypted_padded_data = decryptor.update(encrypted_card) + decryptor.finalize()
@@ -53,7 +62,11 @@ class CreditCardEncryptor:
         decrypted_card = unpadder.update(decrypted_padded_data) + unpadder.finalize()
         return decrypted_card.decode()
 
-
+# --- Request Schema Definition ---
+"""
+    function to be used in the swagger_auto_schema decorator, used in the api viewset 
+    to return a post example in the swagger documentation
+"""
 request_schema_dict = openapi.Schema(
     title=("Create Credit Card"),
     type=openapi.TYPE_OBJECT,

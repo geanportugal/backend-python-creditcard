@@ -1,12 +1,10 @@
-import os
-import re
-from rest_framework import serializers
 from datetime import datetime, timedelta
-from cryptography.fernet import Fernet
+
+from rest_framework import serializers
+
 from django.core.validators import MinLengthValidator, RegexValidator
-from rest_framework.validators import UniqueValidator
 from django.conf import settings
-from django.utils.dateparse import parse_date
+
 from card.models import CreditCard
 from .utils import CreditCardEncryptor, ValidatedCreditCard
 
@@ -37,12 +35,8 @@ class CreditCardSerializer(serializers.ModelSerializer):
             )
         ])
     number = serializers.CharField(
-        max_length=255, 
-        validators=[
-            UniqueValidator(
-                queryset=CreditCard.objects.all(),
-                message='Credit Card alred exists'),
-        ])
+        max_length=255
+    )
     
     exp_date = serializers.DateField()
     brand = serializers.CharField(required=False)
@@ -67,10 +61,6 @@ class CreditCardSerializer(serializers.ModelSerializer):
     def validate_number(self, value):
         # Validate the value field.
         value = value.replace(" ", "")
-        regex = r'^[0-9]+$'
-        match = re.match(regex, value) 
-        if bool(match) is False:
-            raise serializers.ValidationError("Invalid credit card")
         try:
             # Validate the credit card number
             credit_card_number = ValidatedCreditCard(value).is_valid()
@@ -82,6 +72,9 @@ class CreditCardSerializer(serializers.ModelSerializer):
         
         encryptor = CreditCardEncryptor(self.key, self.salt)
         value = encryptor.encrypt_credit_card(value).hex()
+
+        if CreditCard.objects.filter(number=value).exists():
+            raise serializers.ValidationError("Credit Card already exists")
         return value
     
     def to_internal_value(self, data):
