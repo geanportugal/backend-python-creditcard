@@ -19,5 +19,5 @@ class CreditCardViewSet(viewsets.ModelViewSet):
         serializer.save(holder=holder)
 
     @swagger_auto_schema(request_body=request_schema_dict,)
-    def create(self, request, *args, **kwargs):
-        return super().create(request, *args, **kwargs)
+    def create(self, request):
+        return super().create(request)

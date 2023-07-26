@@ -20,8 +20,7 @@ class ValidatedCreditCard(CreditCard):
         for brand, regex in BRAND_REGEX.items():
             if re.match(regex, self.number):
                 return brand
-        raise serializers.ValidationError('Card number does not match any brand')
-
+        return None
 
 class CreditCardEncryptor:
     def __init__(self, encryption_key, salt):
