@@ -9,7 +9,8 @@ from .serializers import CreditCardSerializer
 
 class CreditCardViewSet(viewsets.ModelViewSet):
     serializer_class = CreditCardSerializer
-    permission_classes = [IsAuthenticated, DjangoModelPermissions]
+    permission_classes = (DjangoModelPermissions, IsAuthenticated)
+
     queryset = CreditCard.objects.all()
      
     @swagger_auto_schema(request_body=request_schema_dict,)
