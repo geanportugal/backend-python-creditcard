@@ -6,7 +6,7 @@ services:
   #---------------------------------------------------------------
   psql:
     container_name: postgres
-    image: postgres:15.3-bullseye
+    image: postgres:15.3-alpine
     command: postgres -c 'max_connections=500'
     volumes:
       - ./data/postgres/data:/var/lib/postgresql/data/
@@ -15,3 +15,21 @@ services:
 
     env_file:
       - ./dotenv/.env
+
+  # ---------------------------------------------------------------------------
+  # Django 
+  #----------------------------------------------------------------------------
+  djangoapp:
+    container_name: Django
+    build:
+      context: .
+    ports:
+      - 8000:8000
+    volumes:
+      - ./app:/app
+      - ./data/web/static:/data/web/static/
+      - ./data/web/media:/data/web/media/
+    env_file:
+      - ./dotenv/.env
+    depends_on:
+      - psql
