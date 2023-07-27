@@ -1,17 +1,19 @@
 import re
-from cryptography.hazmat.primitives import hashes, padding
-from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+
+from creditcard.card import BRAND_REGEX, CreditCard
 from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes, padding
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from drf_yasg import openapi
-from creditcard.card import CreditCard, BRAND_REGEX
+from rest_framework.serializers import ValidationError
 
 
 class ValidatedCreditCard(CreditCard):
     def __init__(self, *args, **kwargs):
         """Initialize the credit card."""
         return super().__init__(*args, **kwargs)
-    
+
     # Check the card number against known brand regex patterns and return the brand name
     # override method from CreditCard from python-creditcard MAISTODOS
     def get_brand(self):
@@ -20,13 +22,15 @@ class ValidatedCreditCard(CreditCard):
             if re.match(regex, self.number):
                 return brand
         # return none because original method return Exception
-        return None
+        raise ValidationError({'brand': 'Brand not Found"'})
+
 
 class CreditCardEncryptor:
     """ A class that encrypts and decrypts credit card numbers.
         AES symmetry algorithm was used for encryption. For more details, see
         https://cryptography.io/en/latest/hazmat/primitives/symmetric-encryption/
     """
+
     def __init__(self, encryption_key, salt):
         """Initialize the encryptor."""
         self.encryption_key = encryption_key.encode()
@@ -42,25 +46,30 @@ class CreditCardEncryptor:
             backend=default_backend()
         )
         return kdf.derive(self.encryption_key)
-    
+
     # Encrypt the credit card number using AES encryption
     def encrypt_credit_card(self, card_number):
-        cipher = Cipher(algorithms.AES(self.key), modes.ECB(), backend=default_backend())
+        cipher = Cipher(algorithms.AES(self.key), modes.ECB(),
+                        backend=default_backend())
         encryptor = cipher.encryptor()
         padder = padding.PKCS7(algorithms.AES.block_size).padder()
         padded_data = padder.update(card_number.encode()) + padder.finalize()
         encrypted_card = encryptor.update(padded_data) + encryptor.finalize()
         return encrypted_card
-    
+
     # Decrypt the encrypted credit card number using AES decryption
     def decrypt_credit_card(self, encrypted_card):
         encrypted_card = bytes.fromhex(encrypted_card)
-        cipher = Cipher(algorithms.AES(self.key), modes.ECB(), backend=default_backend())
+        cipher = Cipher(algorithms.AES(self.key), modes.ECB(),
+                        backend=default_backend())
         decryptor = cipher.decryptor()
-        decrypted_padded_data = decryptor.update(encrypted_card) + decryptor.finalize()
+        decrypted_padded_data = decryptor.update(
+            encrypted_card) + decryptor.finalize()
         unpadder = padding.PKCS7(algorithms.AES.block_size).unpadder()
-        decrypted_card = unpadder.update(decrypted_padded_data) + unpadder.finalize()
+        decrypted_card = unpadder.update(
+            decrypted_padded_data) + unpadder.finalize()
         return decrypted_card.decode()
+
 
 # --- Request Schema Definition ---
 """
