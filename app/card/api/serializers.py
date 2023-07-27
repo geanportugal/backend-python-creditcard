@@ -71,7 +71,9 @@ class CreditCardSerializer(serializers.ModelSerializer):
 
         encryptor = CreditCardEncryptor(self.key, self.salt)
         value = encryptor.encrypt_credit_card(value).hex()
-
+        request = self.context['request']
+        if request.method == 'PUT':
+            return value
         if CreditCard.objects.filter(number=value).exists():
             raise serializers.ValidationError(
                 {'number': 'Credit Card already exists'})
@@ -83,6 +85,7 @@ class CreditCardSerializer(serializers.ModelSerializer):
         method = request.method
         # Check if the request method is PUT or PATCH.
         if method in ('PUT', 'PATCH'):
+            print(method)
             # Check if the "exp_date" and "number" fields are present in the data.
             if 'exp_date' not in data or 'number' not in data:
                 # Do not require the "exp_date" and "number" fields in the update.
