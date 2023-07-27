@@ -6,66 +6,99 @@ Desafio para vaga de backend na MaisTodos
 Desafio técnico `Python`
 ========================
 
-Alguns requisitos
+## Técnologias utilizadas
+  - Python
+  - Django
+  - Django Rest Framework
+  - Postgres
+  - Docker
+
+Instalando o Projeto
 -----------------
-  - Deixe o código em inglês;
-  - Use Git;
-  - Procure fazer `micro commits` que são muitos commits com menos código isso nos ajuda a compreender a sua lógica;
-  - Pergunte nos sobre qualquer dúvida que venha a surgir durante o desenvolvimento;
-  - Documente detalhadamente quaisquer referencias/ferramentas que vc pesquisar;
-  - Crie um repositório público e nos passe o link para acompanharmos o desenvolvimento;
-  - Faça testes automatizados (unitários e de integração);
 
-Problema
---------
+  - Use Docker!!! - Download  [here](https://www.docker.com/get-started);
+  - Faça o clone do projeto em sua máquina local, use git clone;
 
-A `MAISTODOS LTDA` está lançando um sistema inovador de cadastros de cartões de crédito e precisa garantir toda a qualidade e padronização dos dados.
-E esse sistema será uma `API` simples de cadastro de cartões de crédito, e o sistema irá receber no cadastro o seguinte payload:
+Iniciando o Projeto
+-----------------
+  - Execute o docker
+  - vá até a pasta **dotenv** e renomeie o arquivo **.env_example** para **.env**
+  - Agora configure as variaveis de ambiente
+  - para gerar o Secret_key use python 3.6 ou superior, no console digite python ou python3 e execute os comandos 
+  ```python
+     import secrets
+     print(secrets.token_urlsafe(64))
+  ```
+  - Copie o conteudo e substitua na variavel de ambiente **SECRET_KEY**
+  - agora gere o token para encriptar o cartão de crédito
+  ```python
+     import secrets
+     print(secrets.token_urlsafe(32))
+  ```
+  - Copie o conteudo e substitua na variavel de ambiente **SECRET_KEY_CARD**
+  - Em seguida gere o salt, também usado na criptografia do cartão
+  ```python
+     import secrets
+     print(secrets.token_urlsafe(16))
+  ```
+  - Copie o conteudo e substitua na variavel de ambiente **SALT**
+  - agora de um nome ao banco de dados, usuário e senha e porta de conexão do postgres, substituindo as variaveis de ambiente **POSTGRES_DB**, **POSTGRES_USER**, **POSTGRES_PASSWORD**, **POSTGRES_PORT** - a porta padrão é a 5432, o host não altere, pois estamos usando o o network em modo bridge
+  - substitua as variaveis de ambiente **SUPERUSER_USERNAME**, **SUPERUSER_EMAIL**, **SUPERUSER_PASSWORD**, com os dados do seu usuário para acesso ao django admin e também sera usado para gerar o token da api
+
+Feito tudo isso agora vamos executar o projeto finalmente, pela linha de comando vá até a pasta raiz do projeto e execute o seguinte comando 
 ```shell
-{
-    "exp_date": "02/2026",
-    "holder": "Fulano",
-    "number": "0000000000000001",
-    "cvv": "123",
-}
+  docker-compose up --build
 ```
+Este comando ira executar os seguintes passos
 
-Como não é um cadastro qualquer, esses dados precisam passar por uma validação criteriosa e específica:
+- Download das imagens necessárias
+- Criara os containers do arquivo docker-compose.yml
+- criara o banco de dados
+- ira executar as migrações do projeto
+- ira criar um super usuario do django
+- executara os testes unitários e de integração
+- rodara o runserver do Django na porta 8000
 
-- **exp_date**
-  - Ver se é uma data válida.
-  - E se for válida, não pode ser menor do que a data de hoje. 😜
-  - No banco de dados essa data deve ser gravada no formato yyyy-MM-[ultimo_dia_mes], por exemplo: 02/2022, deve ser 2022-02-28
+Se tudo correu bem acesse a api pelo endereço http://localhost:8000
 
-- **holder**
-  - Deve ser um campo obrigatório e deve possuir mais de 2 caracteres.
-
-- **number**
-  - Verificar se o número do cartão de crédito é válido, utilizando a lib https://github.com/MaisTodos/python-creditcard
-  - Para instalar use ```pip install git+https://github.com/maistodos/python-creditcard.git@main```
-  - Este campo deve ser gravado de forma criptografada no banco de dados.
-
-- **cvv**
-  - Este campo não é obrigatório, mas caso esteja presente no payload, deve possuir um tamanho entre 3 e 4 caracteres.
-  - Este é um campo númerico.
-  
-#### IMPORTANTE: 
-O modelo de dados que representa o cartao de crédito, deve possuir um campo chamado **brand** que representa a bandeira do cartão de crédito. Este campo deve ser preenchido de maneira automática, utilizando a mesma lib que foi usada para validar o número do cartão de crédito.
-
-A api deve conter basicamente as urls (sugestão):
+## Acessando os endpoints da API
 ```shell
   GET  /api/v1/credit-card - listar os cartões de crédito
   GET  /api/v1/credit-card/`<key>` - detalhe do cartão de crédito
-  POST /api/v1/credit-card - cadastrar um novo cartão de crédito
+  POST /api/v1/credit-card/ - cadastrar um novo cartão de crédito
+  GET  /api/v1/docs - acessa a documentação - swagger
+  GET  /api/v1/redoc - acessa a documentação - Redoc
+  POST  /api/v1/token/- Endpoint para gerar o token de autorização
+  POST  api/v1/token/refresh/ - Endpoint para refrescar o token
 ```
 
-O acesso à api deve ser aberto ao mundo, porém deve possuir autenticação e autorização.
 
-Você está livre para definir a melhor arquitetura e tecnologias para solucionar este desafio, todos os itens descritos nos campos são `sugestões`, mas não se esqueça de contar sua motivação no arquivo README que deve acompanhar sua solução, junto com os detalhes de como executar seu programa. Documentação e testes serão avaliados também =).
+  
+Gerando o Token
+--------
+Sera gerado um token do tipo JWT Bearer
+```shell
+    POST  /api/v1/token/
+    {
+        "username": "maistodos",
+        "password": "maistodos"
+    }
 
-Nós solicitamos que você trabalhe no desenvolvimento desse sistema sozinho e não divulgue a solução desse problema pela internet.
-
-Boa sorte, Equipe MaisTodos!
+```
+Utilizando o Token
+--------
+```shell
+curl --location '/api/v1/credit-card/' \
+--header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNjkwNDIxNTI1LCJpYXQiOjE2OTA0MTc5MjUsImp0aSI6IjQ1NGJkNzdhMzEwODQ5NzFiYWUxZTFmYjY4MGJmODY1IiwidXNlcl9pZCI6MX0.3NvBRwwc6FGfekeP0luqBtcV25LHBIOpt4VLxihMRGA' \
+--header 'Content-Type: application/json' \
+--data ' {
+        "number": "5591972411369972",
+        "exp_date": "02/2026",
+        "holder": "John Doe",
+        "cvv": "123"
+    }'
+```
+* **Importante:** Para todas as chamadas da api será necessário utilizar o token
 
 ![Luck](https://media.giphy.com/media/l49JHz7kJvl6MCj3G/giphy.gif)
 

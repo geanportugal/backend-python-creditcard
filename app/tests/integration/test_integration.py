@@ -1,27 +1,31 @@
-import pytest
 from datetime import date
+
+import pytest
+from card.api.serializers import CreditCardSerializer
+from card.models import CreditCard
+from django.contrib.auth.models import User
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
-from django.contrib.auth.models import User
 from rest_framework_simplejwt.tokens import RefreshToken
-from card.models import CreditCard
-from card.api.serializers import CreditCardSerializer
 
 
 @pytest.fixture
 def api_client():
     return APIClient()
 
+
 @pytest.fixture
 def test_user():
-    return User.objects.create_user(username='testuser', password='testpassword', email='testuser@test.com')
+    return User.objects.create_superuser(username='testuser', password='testpassword', email='testuser@test.com')
+
 
 @pytest.fixture
 def get_tokens_for_user(test_user):
     refresh = RefreshToken.for_user(test_user)
     return f'Bearer {str(refresh.access_token)}'
-       
+
+
 @pytest.fixture
 def credit_card_data():
     return {
@@ -30,6 +34,7 @@ def credit_card_data():
         'holder': 'John Doe',
         'cvv': '123',
     }
+
 
 @pytest.fixture
 def credit_card_data_encrypt():
@@ -40,9 +45,11 @@ def credit_card_data_encrypt():
         'cvv': '123',
     }
 
+
 @pytest.fixture
 def create_credit_card(credit_card_data_encrypt):
     return CreditCard.objects.create(**credit_card_data_encrypt)
+
 
 @pytest.mark.django_db
 def test_create_credit_card(api_client, credit_card_data, get_tokens_for_user):
@@ -102,6 +109,7 @@ def test_update_credit_card(api_client, create_credit_card, get_tokens_for_user)
     create_credit_card.refresh_from_db()
     assert create_credit_card.holder == 'Jane Doe'
     assert create_credit_card.number == 'b9f9540638c0afc987609227f170f6923dc7cd48d0bf5dffc1caf8debaa5af7f'
+
 
 @pytest.mark.django_db
 def test_patch_credit_card(api_client, create_credit_card, get_tokens_for_user):

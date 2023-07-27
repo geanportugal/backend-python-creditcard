@@ -4,7 +4,3 @@
 set -e
 
 wait_postgres.sh
-migrate.sh
-createuser.sh
-pytest.sh
-runserver.sh

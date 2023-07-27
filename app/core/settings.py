@@ -11,50 +11,43 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 import os
 from datetime import timedelta
+from pathlib import Path
+
 from decouple import Config, RepositoryEnv
 
 """
      using python-decouple to manage environment variables
 """
 
-from pathlib import Path
-
-# path to the dotenv folder where the environment variables are outside the project folder
-ENV_PATH = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = BASE_DIR.parent / 'data' / 'web'
 
-# path to dotenv folder
-dotenv_path = os.path.join(ENV_PATH, 'dotenv', '.env')
-
-# get enviroments variables 
-config = Config(RepositoryEnv(dotenv_path))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
 # Configures the secret key through the key used in the .env file
-SECRET_KEY = config('SECRET_KEY')
+SECRET_KEY = os.getenv('SECRET_KEY')
 
 # secret key for encrypt credit card
-SECRET_KEY_CARD = config('SECRET_KEY_CARD')
+SECRET_KEY_CARD = os.getenv('SECRET_KEY_CARD')
 
-# salt key for encrypt credit card using in AES encript 
-SALT = config('SALT')
+# salt key for encrypt credit card using in AES encript
+SALT = os.getenv('SALT')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # Configure the debug according to the .env file settings
-DEBUG = config('DEBUG', default=False, cast=bool)
+DEBUG = os.getenv('DEBUG', False)
 
 '''
     For this example we are configuring the accepted hosts as an environment
     variable for greater security of the project
 '''
 ALLOWED_HOSTS = [
-    h.strip() for h in config('ALLOWED_HOSTS', '').split(',')
+    h.strip() for h in os.getenv('ALLOWED_HOSTS', '').split(',')
     if h.strip()
 ]
 
@@ -147,15 +140,15 @@ SWAGGER_SETTINGS = {
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-# Configure database infos in .env file 
+# Configure database infos in .env file
 DATABASES = {
     'default': {
-        'ENGINE': config('DB_ENGINE'),
-        'NAME': config('POSTGRES_DB'),
-        'USER': config('POSTGRES_USER'),
-        'PASSWORD': config('POSTGRES_PASSWORD'),
-        'HOST': config('POSTGRES_HOST'),
-        'PORT': config('POSTGRES_PORT'),
+        'ENGINE': os.getenv('DB_ENGINE'),
+        'NAME': os.getenv('POSTGRES_DB'),
+        'USER': os.getenv('POSTGRES_USER'),
+        'PASSWORD': os.getenv('POSTGRES_PASSWORD'),
+        'HOST': os.getenv('POSTGRES_HOST'),
+        'PORT': os.getenv('POSTGRES_PORT'),
     }
 }
 
