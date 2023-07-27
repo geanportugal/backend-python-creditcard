@@ -7,10 +7,10 @@ Desafio técnico `Python`
 ========================
 
 ## Técnologias utilizadas
-  - Python
-  - Django
+  - Python 3.11
+  - Django 4.2
   - Django Rest Framework
-  - Postgres
+  - Postgres - 15
   - Docker
 
 Instalando o Projeto
