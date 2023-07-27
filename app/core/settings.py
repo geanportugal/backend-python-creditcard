@@ -29,7 +29,6 @@ load_dotenv(BASE_DIR.parent / 'dotenv' / '.env', override=True)
 # SECURITY WARNING: keep the secret key used in production secret!
 # Configures the secret key through the key used in the .env file
 SECRET_KEY = os.getenv('SECRET_KEY')
-print(os.getenv('SECRET_KEY'))
 
 # secret key for encrypt credit card
 SECRET_KEY_CARD = os.getenv('SECRET_KEY_CARD')
@@ -40,8 +39,6 @@ SALT = os.getenv('SALT')
 # SECURITY WARNING: don't run with debug turned on in production!
 # Configure the debug according to the .env file settings
 DEBUG = bool(int(os.getenv('DEBUG', 0)))
-
-print(os.getenv('DEBUG'))
 
 '''
     For this example we are configuring the accepted hosts as an environment

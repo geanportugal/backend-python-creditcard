@@ -63,11 +63,12 @@ class CreditCardSerializer(serializers.ModelSerializer):
             # Validate the credit card number
             credit_card_number = ValidatedCreditCard(value).is_valid()
         except ValueError:
-            raise serializers.ValidationError({'number': 'Invalid credit card'})
+            raise serializers.ValidationError('Invalid credit card')
         else:
             if not credit_card_number:
                 raise serializers.ValidationError(
-                    {'number': 'Invalid credit card'})
+                    'Invalid credit card'
+                )
 
         encryptor = CreditCardEncryptor(self.key, self.salt)
         value = encryptor.encrypt_credit_card(value).hex()
@@ -76,7 +77,7 @@ class CreditCardSerializer(serializers.ModelSerializer):
             return value
         if CreditCard.objects.filter(number=value).exists():
             raise serializers.ValidationError(
-                {'number': 'Credit Card already exists'})
+                'Credit Card already exists')
         return value
 
     def to_internal_value(self, data):
